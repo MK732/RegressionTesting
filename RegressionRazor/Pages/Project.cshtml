@@ -1,0 +1,70 @@
+﻿@page
+@model ProjectModel
+@{
+    ViewData["Title"] = $"Test Cases for {Model.CurrentProject?.Name}";
+}
+
+@if (Model.CurrentProject == null)
+{
+    <p>Project not found.</p>
+    return;
+}
+
+<h1 class="mb-4">@ViewData["Title"]</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var testCase in Model.CurrentProject.TestCases)
+        {
+            <tr>
+                <td>@testCase.Id</td>
+                <td>@testCase.Name</td>
+                <td>@testCase.Description</td>
+                <td>
+                    <span class="badge bg-@(GetStatusColor(testCase.Status))">@testCase.Status</span>
+                </td>
+                <td>
+                    <a asp-page="/TestCase" asp-route-projectId="@Model.CurrentProject.Id" asp-route-testCaseId="@testCase.Id" class="btn btn-primary btn-sm">View Details</a>
+                    <form method="post" asp-page-handler="ResetTestCase" asp-route-projectId="@Model.CurrentProject.Id" asp-route-testCaseId="@testCase.Id" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-warning">Reset</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h2 class="mt-4">Add New Test Case</h2>
+<form method="post" asp-page-handler="AddTestCase" asp-route-projectId="@Model.CurrentProject.Id">
+    <div class="mb-3">
+        <label asp-for="NewTestCase.Name" class="form-label">Name</label>
+        <input asp-for="NewTestCase.Name" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label asp-for="NewTestCase.Description" class="form-label">Description</label>
+        <textarea asp-for="NewTestCase.Description" class="form-control" rows="3" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Test Case</button>
+</form>
+
+@functions {
+    private string GetStatusColor(TestStatus status)
+    {
+        return status switch
+        {
+            TestStatus.Passed => "success",
+            TestStatus.Failed => "danger",
+            TestStatus.InProgress => "warning",
+            _ => "secondary"
+        };
+    }
+}

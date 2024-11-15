@@ -1,0 +1,115 @@
+﻿@page
+@model TestCaseModel
+@{
+    ViewData["Title"] = $"Test Case: {Model.CurrentTestCase?.Name}";
+}
+
+<h1 class="mb-4">@ViewData["Title"]</h1>
+
+@if (Model.CurrentProject == null || Model.CurrentTestCase == null)
+{
+    <p>Test case not found.</p>
+    return;
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Description</h5>
+            </div>
+            <div class="card-body">
+                <p>@Model.CurrentTestCase.Description</p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Steps</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Step</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Outcome</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var step in Model.CurrentTestCase.Steps)
+                        {
+                            <tr>
+                                <td>@step.StepNumber</td>
+                                <td>@step.Name</td>
+                                <td>@step.Description</td>
+                                <td>@step.Outcome</td>
+                                <td>
+                                    <form method="post" asp-page-handler="UpdateStepStatus" asp-route-projectId="@Model.CurrentProject.Id" asp-route-testCaseId="@Model.CurrentTestCase.Id" asp-route-stepId="@step.Id">
+                                        <div class="btn-group" role="group">
+                                            <button type="submit" name="status" value="@StepStatus.Passed" class="btn btn-sm @(step.Status == StepStatus.Passed ? "btn-success" : "btn-outline-success")">Pass</button>
+                                            <button type="submit" name="status" value="@StepStatus.Failed" class="btn btn-sm @(step.Status == StepStatus.Failed ? "btn-danger" : "btn-outline-danger")">Fail</button>
+                                            <button type="submit" name="status" value="@StepStatus.NotStarted" class="btn btn-sm @(step.Status == StepStatus.NotStarted ? "btn-secondary" : "btn-outline-secondary")">Clear</button>
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Add New Step</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="AddStep" asp-route-projectId="@Model.CurrentProject.Id" asp-route-testCaseId="@Model.CurrentTestCase.Id">
+                    <div class="mb-3">
+                        <label asp-for="NewTestStep.Name" class="form-label">Step Name</label>
+                        <input asp-for="NewTestStep.Name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="NewTestStep.Description" class="form-label">Step Description</label>
+                        <textarea asp-for="NewTestStep.Description" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="NewTestStep.Outcome" class="form-label">Expected Outcome</label>
+                        <input asp-for="NewTestStep.Outcome" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Step</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Status</h5>
+            </div>
+            <div class="card-body">
+                <p>Current Status: <span class="badge bg-@(GetStatusColor(Model.CurrentTestCase.Status))">@Model.CurrentTestCase.Status</span></p>
+                <form method="post" asp-page-handler="ResetTestCase" asp-route-projectId="@Model.CurrentProject.Id" asp-route-testCaseId="@Model.CurrentTestCase.Id">
+                    <button type="submit" class="btn btn-warning">Reset Test Case</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusColor(TestStatus status)
+    {
+        return status switch
+        {
+            TestStatus.Passed => "success",
+            TestStatus.Failed => "danger",
+            TestStatus.InProgress => "warning",
+            _ => "secondary"
+        };
+    }
+}
